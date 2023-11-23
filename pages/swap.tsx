@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { fetchBalance, fetchConvertHistory, fetchQuote } from "../api";
+import {
+  createConvert,
+  fetchBalance,
+  fetchConvertHistory,
+  fetchQuote,
+} from "../api";
 import { auth } from "auth";
 import Layout from "../components/layout";
 import {
@@ -11,6 +16,11 @@ import {
   Button,
   Card,
   CardBody,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@nextui-org/react";
 
 import type { GetServerSidePropsContext } from "next";
@@ -22,8 +32,9 @@ export default function ServerSidePage() {
   const [history, setHistory] = useState([]);
   const [baseCcy, setBaseCcy] = useState("");
   const [quoteCcy, setQuoteCcy] = useState("");
-  const [amount, setAmount] = useState("1");
+  const [amount, setAmount] = useState("");
   const [selected, setSelected] = React.useState("buy");
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -60,6 +71,27 @@ export default function ServerSidePage() {
       action: selected,
     }).then((result) => {
       setQuote(result);
+      setModalOpen(true);
+    });
+  };
+
+  const create = () => {
+    createConvert({
+      quoteId: quote.quoteId,
+      baseCcy,
+      quoteCcy,
+      side: quote.side,
+      sz: quote.rfqSz,
+      szCcy: quote.rfqSzCcy,
+    }).then((result) => {
+      console.log(result);
+      fetchConvertHistory().then((result) => {
+        setHistory(result);
+      });
+      fetchBalance().then((result) => {
+        setBalance(result);
+      });
+      setQuote([]);
     });
   };
 
@@ -203,9 +235,57 @@ export default function ServerSidePage() {
       <br />
       <br />
       {quote && (
-        <div>
-          <pre>{JSON.stringify(quote, null, 2)}</pre>
-        </div>
+        <Modal isOpen={modalOpen}>
+          <ModalContent>
+            {(onClose) => (
+              <>
+                <ModalHeader className="flex flex-col gap-1">
+                  New conversion
+                </ModalHeader>
+                <ModalBody>
+                  <p>
+                    You can <b>{quote.side}</b> <b>{quote.rfqSz}</b>{" "}
+                    <b>{quote.quoteCcy}</b> for <b>{quote.baseSz}</b>{" "}
+                    <b>{quote.baseCcy}</b>
+                    <br />
+                    <br />
+                    Conversion rate is <b>{quote.cnvtPx}</b>{" "}
+                    <b>{quote.quoteCcy}</b>
+                    {/* clQReqId: <b>{quote.clQReqId}</b> */}
+                    {/* <br />
+                    origRfqSz: <b>{quote.origRfqSz}</b>
+                    <br />
+                    quoteSz: <b>{quote.quoteSz}</b>
+                    <br />
+                    rfqSzCcy: <b>{quote.rfqSzCcy}</b>
+                    <br /> */}
+                  </p>
+                </ModalBody>
+                <ModalFooter>
+                  <Button
+                    color="danger"
+                    variant="light"
+                    onPress={() => {
+                      setModalOpen(false);
+                      setQuote([]);
+                    }}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    variant="light"
+                    onPress={() => {
+                      setModalOpen(false);
+                      create();
+                    }}
+                  >
+                    Confirm
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
       )}
       {history && (
         <>

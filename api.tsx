@@ -70,6 +70,22 @@ export async function createWithdrawal({ ccy, amt, toAddr, fee, chain }) {
   return res;
 }
 
+export async function createConvert({
+  quoteId,
+  baseCcy,
+  quoteCcy,
+  side,
+  sz,
+  szCcy,
+}) {
+  const res = await ky
+    .post("/api/convert", {
+      json: { quoteId, baseCcy, quoteCcy, side, sz, szCcy },
+    })
+    .json();
+  return res;
+}
+
 export async function createApiKey({ label, passphrase, ip, perm }) {
   const res = await ky
     .post("/api/api_keys", {
@@ -140,8 +156,6 @@ export async function createDepositAddress({
     },
   });
 
-  console.log(json);
-
   return { address: json?.data[0]?.addr };
 }
 
@@ -177,7 +191,7 @@ export async function createAPIKey({
       "OK-ACCESS-PASSPHRASE": process.env.OK_ACCESS_PASSPHRASE,
     },
   });
-  console.log(json);
+
   return json?.data[0];
 }
 
@@ -239,8 +253,6 @@ export async function subaccountList() {
     },
   });
 
-  console.log(JSON.stringify(json));
-
   return;
 }
 
@@ -297,7 +309,7 @@ export async function estimateQuote({
     },
   });
 
-  return { quote: json?.data };
+  return { quote: json?.data[0] };
 }
 
 export async function withdraw({
@@ -337,9 +349,47 @@ export async function withdraw({
     },
   });
 
-  console.log(json.data);
-
   return { withdrawal: json?.data };
+}
+
+export async function convertTrade({
+  apiKey,
+  apiSecretKey,
+  quoteId,
+  baseCcy,
+  quoteCcy,
+  side,
+  sz,
+  szCcy,
+}) {
+  let url = "/api/v5/asset/convert/trade";
+  let timestamp = new Date().toISOString();
+
+  let query = {
+    quoteId,
+    baseCcy,
+    quoteCcy,
+    side,
+    sz,
+    szCcy,
+  };
+
+  const { data: json } = await axios.post("https://www.okx.com" + url, query, {
+    headers: {
+      "Content-Type": "application/json",
+      "OK-ACCESS-KEY": apiKey,
+      "OK-ACCESS-SIGN": CryptoJS.enc.Base64.stringify(
+        CryptoJS.HmacSHA256(
+          timestamp + "POST" + url + JSON.stringify(query),
+          apiSecretKey
+        )
+      ),
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": process.env.OK_ACCESS_PASSPHRASE,
+    },
+  });
+
+  return { convert: json?.data[0] };
 }
 
 export async function getWithdrawalHistory({ apiKey, apiSecretKey }) {
@@ -447,7 +497,6 @@ export async function getSumsubAccessToken({ externalUserId }) {
   const query = {};
 
   let valueToSign = timestamp + "POST" + url + JSON.stringify(query);
-  console.log("valueToSign:", valueToSign);
 
   const signature = CryptoJS.HmacSHA256(
     valueToSign,
