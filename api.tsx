@@ -42,6 +42,11 @@ export async function fetchWithdrawalHistory() {
   return res;
 }
 
+export async function fetchConvertHistory() {
+  const res = await ky.get("/api/convert_history").json();
+  return res;
+}
+
 export async function fetchQuote({ baseCcy, quoteCcy, amount, action }) {
   const res = await ky
     .post("/api/quote", {
@@ -339,6 +344,25 @@ export async function withdraw({
 
 export async function getWithdrawalHistory({ apiKey, apiSecretKey }) {
   let url = "/api/v5/asset/withdrawal-history";
+  let timestamp = new Date().toISOString();
+
+  const { data: json } = await axios.get("https://www.okx.com" + url, {
+    headers: {
+      "Content-Type": "application/json",
+      "OK-ACCESS-KEY": apiKey,
+      "OK-ACCESS-SIGN": CryptoJS.enc.Base64.stringify(
+        CryptoJS.HmacSHA256(timestamp + "GET" + url, apiSecretKey)
+      ),
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": process.env.OK_ACCESS_PASSPHRASE,
+    },
+  });
+
+  return { history: json?.data };
+}
+
+export async function getConvertHistory({ apiKey, apiSecretKey }) {
+  let url = "/api/v5/asset/convert/history";
   let timestamp = new Date().toISOString();
 
   const { data: json } = await axios.get("https://www.okx.com" + url, {

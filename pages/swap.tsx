@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchBalance, fetchQuote } from "../api";
+import { fetchBalance, fetchConvertHistory, fetchQuote } from "../api";
 import { auth } from "auth";
 import Layout from "../components/layout";
 import {
@@ -19,6 +19,7 @@ import { swap } from "const";
 export default function ServerSidePage() {
   const [balance, setBalance] = useState([]);
   const [quote, setQuote] = useState([]);
+  const [history, setHistory] = useState([]);
   const [baseCcy, setBaseCcy] = useState("");
   const [quoteCcy, setQuoteCcy] = useState("");
   const [amount, setAmount] = useState("1");
@@ -30,6 +31,19 @@ export default function ServerSidePage() {
     fetchBalance().then((result) => {
       if (!ignore) {
         setBalance(result);
+      }
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    setHistory([]);
+    fetchConvertHistory().then((result) => {
+      if (!ignore) {
+        setHistory(result);
       }
     });
     return () => {
@@ -192,6 +206,23 @@ export default function ServerSidePage() {
         <div>
           <pre>{JSON.stringify(quote, null, 2)}</pre>
         </div>
+      )}
+      {history && (
+        <>
+          <br />
+          <b>History</b>
+          {history.map((element) => (
+            <p>
+              <b>state: {element.state}</b>,<b>instId: {element.instId}</b>,
+              <b>baseCcy: {element.baseCcy}</b>,
+              <b>quoteCcy: {element.quoteCcy}</b>,<b>side: {element.side}</b>,
+              <b>fillPx: {element.fillPx}</b>,
+              <b>fillBaseSz: {element.fillBaseSz}</b>,
+              <b>fillQuoteSz: {element.fillQuoteSz}</b>,
+              <b>timestamp: {element.ts}</b>
+            </p>
+          ))}
+        </>
       )}
     </Layout>
   );
