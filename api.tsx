@@ -22,6 +22,11 @@ export async function fetchDeposit() {
   return res;
 }
 
+export async function fetchCurrencies() {
+  const res = await ky.get("/api/currencies").json();
+  return res;
+}
+
 export async function fetchSumsub() {
   const res = await ky.get("/api/sumsub").json();
   return res;
@@ -46,6 +51,15 @@ export async function fetchQuote({ baseCcy, quoteCcy, amount, action }) {
         amount,
         action,
       },
+    })
+    .json();
+  return res;
+}
+
+export async function createWithdrawal({ ccy, amt, toAddr, fee, chain }) {
+  const res = await ky
+    .post("/api/withdraw", {
+      json: { ccy, amt, toAddr, fee, chain },
     })
     .json();
   return res;
@@ -318,6 +332,8 @@ export async function withdraw({
     },
   });
 
+  console.log(json.data);
+
   return { withdrawal: json?.data };
 }
 
@@ -338,6 +354,25 @@ export async function getWithdrawalHistory({ apiKey, apiSecretKey }) {
   });
 
   return { history: json?.data };
+}
+
+export async function getCurrencies({ ccy, apiKey, apiSecretKey }) {
+  let url = "/api/v5/asset/currencies?ccy=" + ccy;
+  let timestamp = new Date().toISOString();
+
+  const { data: json } = await axios.get("https://www.okx.com" + url, {
+    headers: {
+      "Content-Type": "application/json",
+      "OK-ACCESS-KEY": apiKey,
+      "OK-ACCESS-SIGN": CryptoJS.enc.Base64.stringify(
+        CryptoJS.HmacSHA256(timestamp + "GET" + url, apiSecretKey)
+      ),
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": process.env.OK_ACCESS_PASSPHRASE,
+    },
+  });
+
+  return { currencies: json?.data };
 }
 
 export async function createSumsubApplicant({ externalUserId }) {

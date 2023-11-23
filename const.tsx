@@ -15,3 +15,7 @@ export const swap = [
   { label: "USDT", value: "USDT" },
   { label: "ETH", value: "ETH" },
 ];
+export const usdt_chains = [
+  { label: "USDT-ERC20", value: "USDT-ERC20" },
+  { label: "USDT-TRC20", value: "USDT-TRC20" },
+];
