@@ -27,8 +27,17 @@ export async function fetchSumsub() {
   return res;
 }
 
+export async function fetchApiKeys() {
+  const res = await ky.get("/api/keys").json();
+  return res;
+}
+
+export async function fetchWithdrawalHistory() {
+  const res = await ky.get("/api/withdrawal_history").json();
+  return res;
+}
+
 export async function fetchQuote({ baseCcy, quoteCcy, amount, action }) {
-  console.log(baseCcy, quoteCcy, amount);
   const res = await ky
     .post("/api/quote", {
       json: {
@@ -175,6 +184,26 @@ export async function subaccountDepositHistory({ subaccountName }) {
   return { history: json?.data };
 }
 
+export async function subaccountApiKeys({ subaccountName }) {
+  let url =
+    "/api/v5/broker/nd/subaccount/apikey" + "?subAcct=" + subaccountName;
+  let timestamp = new Date().toISOString();
+
+  const { data: json } = await axios.get("https://www.okx.com" + url, {
+    headers: {
+      "Content-Type": "application/json",
+      "OK-ACCESS-KEY": process.env.OK_ACCESS_KEY,
+      "OK-ACCESS-SIGN": CryptoJS.enc.Base64.stringify(
+        CryptoJS.HmacSHA256(timestamp + "GET" + url, process.env.OK_SECRET_KEY)
+      ),
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": process.env.OK_ACCESS_PASSPHRASE,
+    },
+  });
+
+  return { keys: json?.data };
+}
+
 export async function subaccountList() {
   let url = "/api/v5/broker/nd/subaccount-info";
   let timestamp = new Date().toISOString();
@@ -248,9 +277,67 @@ export async function estimateQuote({
       "OK-ACCESS-PASSPHRASE": process.env.OK_ACCESS_PASSPHRASE,
     },
   });
-  console.log(json);
 
   return { quote: json?.data };
+}
+
+export async function withdraw({
+  apiKey,
+  apiSecretKey,
+  ccy,
+  amt,
+  dest,
+  toAddr,
+  fee,
+  chain,
+}) {
+  let url = "/api/v5/asset/withdrawal";
+  let timestamp = new Date().toISOString();
+
+  let query = {
+    ccy,
+    amt,
+    dest,
+    toAddr,
+    fee,
+    chain,
+  };
+
+  const { data: json } = await axios.post("https://www.okx.com" + url, query, {
+    headers: {
+      "Content-Type": "application/json",
+      "OK-ACCESS-KEY": apiKey,
+      "OK-ACCESS-SIGN": CryptoJS.enc.Base64.stringify(
+        CryptoJS.HmacSHA256(
+          timestamp + "POST" + url + JSON.stringify(query),
+          apiSecretKey
+        )
+      ),
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": process.env.OK_ACCESS_PASSPHRASE,
+    },
+  });
+
+  return { withdrawal: json?.data };
+}
+
+export async function getWithdrawalHistory({ apiKey, apiSecretKey }) {
+  let url = "/api/v5/asset/withdrawal-history";
+  let timestamp = new Date().toISOString();
+
+  const { data: json } = await axios.get("https://www.okx.com" + url, {
+    headers: {
+      "Content-Type": "application/json",
+      "OK-ACCESS-KEY": apiKey,
+      "OK-ACCESS-SIGN": CryptoJS.enc.Base64.stringify(
+        CryptoJS.HmacSHA256(timestamp + "GET" + url, apiSecretKey)
+      ),
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": process.env.OK_ACCESS_PASSPHRASE,
+    },
+  });
+
+  return { history: json?.data };
 }
 
 export async function createSumsubApplicant({ externalUserId }) {

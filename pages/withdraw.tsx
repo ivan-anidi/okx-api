@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchBalance, fetchDeposit, fetchHistory } from "../api";
+import { fetchBalance, fetchWithdrawalHistory } from "../api";
 import { auth } from "auth";
 import Layout from "../components/layout";
 import { Input } from "@nextui-org/input";
@@ -10,6 +10,7 @@ import type { GetServerSidePropsContext } from "next";
 export default function ServerSidePage() {
   const [balance, setBalance] = useState([]);
   const [withdraw, setWithdraw] = useState("");
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
     let ignore = false;
@@ -17,6 +18,19 @@ export default function ServerSidePage() {
     fetchBalance().then((result) => {
       if (!ignore) {
         setBalance(result);
+      }
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    setHistory([]);
+    fetchWithdrawalHistory().then((result) => {
+      if (!ignore) {
+        setHistory(result);
       }
     });
     return () => {
@@ -71,6 +85,22 @@ export default function ServerSidePage() {
                 Withdraw
               </Button>
             </p>
+          </>
+        )}
+        {history && (
+          <>
+            <br />
+            <b>History</b>
+            {history.map((element) => (
+              <p>
+                <b>chain: {element.chain}</b>,<b>fee: {element.fee}</b>,
+                <b>ccy: {element.ccy}</b>,<b>clientId: {element.clientId}</b>,
+                <b>amt: {element.amt}</b>,<b>txId: {element.txId}</b>,
+                <b>to: {element.to}</b>,<b>state: {element.state}</b>,
+                <b>timestamp: {element.ts}</b>,
+                <b>Withdrawal ID: {element.wdId}</b>.
+              </p>
+            ))}
           </>
         )}
       </article>

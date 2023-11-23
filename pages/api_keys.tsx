@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchHistory, createApiKey } from "../api";
+import { createApiKey, fetchApiKeys } from "../api";
 import { auth } from "auth";
 import Layout from "../components/layout";
 import {
@@ -52,7 +52,7 @@ export default function ServerSidePage() {
   useEffect(() => {
     let ignore = false;
     setKeys([]);
-    fetchHistory().then((result) => {
+    fetchApiKeys().then((result) => {
       if (!ignore) {
         setKeys(result);
       }
@@ -138,23 +138,18 @@ export default function ServerSidePage() {
         Create key
       </Button>
       <br />
-      {/*keys && (
+      {keys && (
         <>
           <br />
           <b>Keys</b>
           {keys.map((element) => (
             <p>
-              <b>
-                {element.amt}
-                {element.ccy}
-              </b>
-              , {element.chain} chain, deposit ID: {element.depId}, deposit
-              address: {element.to}, TX: {element.txId}, timestamp: {element.ts}
-              .
+              <b>label: {element.label}</b>, apiKey: {element.apiKey}, perm:{" "}
+              {element.perm}, ip: {element.ip}, timestamp: {element.ts}.
             </p>
           ))}
         </>
-          )*/}
+      )}
 
       <Modal isOpen={modalOpen}>
         <ModalContent>
